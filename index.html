@@ -6,815 +6,152 @@
   <title>順向坡位移警示（雨量 Mock / CWA API）</title>
   <style>
     :root{
-      --bg:#0b1220;
-      --card:#121a2b;
-      --text:#e6eefc;
-      --muted:#a9b7d3;
-      --line:#26314a;
-      --btn:#2a66ff;
-      --danger:#ff4d4f;
-      --warn:#ffb020;
-      --ok:#22c55e;
-      --info:#60a5fa;
+      --bg:#0b1220; --card:#121a2b; --text:#e6eefc; --muted:#a9b7d3; --line:#26314a;
+      --btn:#2a66ff; --danger:#ff4d4f; --warn:#ffb020; --ok:#22c55e; --info:#60a5fa;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      background:linear-gradient(180deg, #0b1220 0%, #070c16 100%);
-      color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", Arial;
-    }
-    header{
-      padding:20px 16px 10px;
-      max-width:1100px;
-      margin:0 auto;
-    }
-    h1{margin:0 0 6px;font-size:20px;letter-spacing:.5px}
+    body{margin:0;background:linear-gradient(180deg,#0b1220 0%,#070c16 100%);color:var(--text);
+      font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC","Microsoft JhengHei",Arial}
+    header{padding:20px 16px 10px;max-width:1100px;margin:0 auto}
+    h1{margin:0 0 6px;font-size:20px}
     .sub{color:var(--muted);font-size:13px;line-height:1.5}
-    main{
-      max-width:1100px;
-      margin:0 auto;
-      padding:12px 16px 28px;
-      display:grid;
-      grid-template-columns: 380px 1fr;
-      gap:14px;
-    }
-    @media (max-width:980px){ main{grid-template-columns:1fr} }
-    .card{
-      background:rgba(18,26,43,.92);
-      border:1px solid rgba(38,49,74,.9);
-      border-radius:14px;
-      padding:14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
+    main{max-width:1100px;margin:0 auto;padding:12px 16px 28px;display:grid;grid-template-columns:380px 1fr;gap:14px}
+    @media (max-width:980px){main{grid-template-columns:1fr}}
+    .card{background:rgba(18,26,43,.92);border:1px solid rgba(38,49,74,.9);border-radius:14px;padding:14px}
     .row{display:flex;gap:10px;align-items:center}
-    .row > *{flex:1}
+    .row>*{flex:1}
     label{display:block;color:var(--muted);font-size:12px;margin:10px 0 6px}
-    input, select, textarea{
-      width:100%;
-      background:#0c1324;
-      border:1px solid #24314c;
-      color:var(--text);
-      border-radius:10px;
-      padding:10px 10px;
-      outline:none;
-      font-size:14px;
-    }
-    textarea{min-height:64px;resize:vertical}
-    input:focus, textarea:focus, select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-    button{
-      background:var(--btn);
-      border:none;
-      color:white;
-      padding:10px 12px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-      letter-spacing:.3px;
-    }
+    input,select{width:100%;background:#0c1324;border:1px solid #24314c;color:var(--text);
+      border-radius:10px;padding:10px;font-size:14px}
+    button{background:var(--btn);border:none;color:white;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:700}
     button.secondary{background:#273451}
     button.danger{background:var(--danger)}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid #2b395a;
-      background:#0c1324;
-      color:var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-    }
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;
+      border:1px solid #2b395a;background:#0c1324;color:var(--muted);font-size:12px}
     .statusDot{width:10px;height:10px;border-radius:50%}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-    .kpi{
-      border:1px solid #23304b;
-      border-radius:12px;
-      padding:12px;
-      background:#0c1324;
-    }
+    .kpi{border:1px solid #23304b;border-radius:12px;padding:12px;background:#0c1324}
     .kpi .t{color:var(--muted);font-size:12px}
     .kpi .v{font-size:22px;font-weight:800;margin-top:6px}
-    .kpi .u{color:var(--muted);font-size:12px;margin-left:6px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .small{font-size:12px;color:var(--muted);line-height:1.45}
+    .mono{font-family:ui-monospace,Consolas,monospace}
     .hr{height:1px;background:rgba(38,49,74,.9);margin:12px 0}
-    table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid rgba(38,49,74,.6);padding:10px 8px;text-align:left;font-size:13px}
-    th{color:var(--muted);font-weight:600}
-    .right{text-align:right}
     canvas{width:100%;height:220px;background:#0c1324;border:1px solid #23304b;border-radius:12px}
-    .toast{
-      position:fixed;right:14px;bottom:14px;max-width:360px;
-      background:#0c1324;border:1px solid #23304b;border-radius:12px;padding:12px;
-      box-shadow:0 12px 30px rgba(0,0,0,.35);display:none;
-    }
-    .toast .title{font-weight:800;margin-bottom:6px}
-    .toast .msg{color:var(--muted);font-size:13px;line-height:1.45}
-    .switch{
-      display:flex;align-items:center;gap:10px;
-      border:1px solid #2b395a;background:#0c1324;border-radius:12px;
-      padding:10px;
-    }
-    .switch input{width:auto;transform:scale(1.1)}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid rgba(38,49,74,.6);padding:8px;font-size:13px}
+    th{color:var(--muted)}
+    .right{text-align:right}
+    .switch{display:flex;gap:10px;align-items:center;border:1px solid #2b395a;background:#0c1324;border-radius:12px;padding:10px}
   </style>
 </head>
-
 <body>
+
 <header>
-  <h1>順向坡位移警示（雨量：Mock / 中央氣象署 API）</h1>
+  <h1>順向坡位移警示（雨量監測）</h1>
   <div class="sub">
-    ✅ GitHub Pages 方案 A：使用同目錄 <span class="mono">mock_cwa.json</span> 來模擬雨量 API。<br/>
-    （如要改成真 API，只要關閉 Mock，並填入你的 Authorization 即可）
+    GitHub Pages 示範版（方案 A）：預設使用 <span class="mono">mock_cwa.json</span> 模擬雨量，
+    計算 1h / 24h / 72h 與 AER（有效累積雨量），觸發警戒分級。
   </div>
 </header>
 
 <main>
-  <!-- LEFT: Controls -->
   <section class="card">
-    <div class="row" style="justify-content:space-between;gap:10px;align-items:flex-start">
-      <div class="pill" id="sysStatus">
-        <span class="statusDot" id="sysDot" style="background:var(--info)"></span>
-        <span id="sysText">尚未開始</span>
-      </div>
-      <div class="pill mono" title="本頁只在你的瀏覽器保存設定與雨量歷史（localStorage）">
-        localStorage
-      </div>
+    <div class="row">
+      <div class="pill"><span class="statusDot" id="sysDot" style="background:var(--info)"></span><span id="sysText">尚未開始</span></div>
+      <div class="pill mono">localStorage</div>
     </div>
 
     <label>模式</label>
     <div class="switch">
-      <input type="checkbox" id="useMock" />
-      <div style="flex:1">
-        <div style="font-weight:800">使用 Mock（GitHub Pages 推薦）</div>
-        <div class="small">開啟：從 <span class="mono">./mock_cwa.json</span> 讀資料（不需要 API Key）</div>
+      <input type="checkbox" id="useMock" checked />
+      <div>
+        <div style="font-weight:700">使用 Mock（免 API Key）</div>
+        <div class="sub">從 <span class="mono">./mock_cwa.json</span> 讀資料</div>
       </div>
     </div>
 
-    <label>中央氣象署 API Key（Authorization）</label>
-    <input id="apiKey" placeholder="真 API 才需要；Mock 可留空" />
-
-    <label>測站 StationId（雨量站代碼）</label>
-    <div class="row">
-      <input id="stationId" placeholder="例如：C0A9F0（mock 內有）" />
-      <button class="secondary" id="btnTest">測試抓取</button>
-    </div>
-
-    <div class="hr"></div>
-
-    <label>資料擷取 URL（真 API 預覽；Mock 會顯示 ./mock_cwa.json）</label>
-    <input id="apiUrl" class="mono" />
+    <label>StationId（雨量站代碼）</label>
+    <input id="stationId" value="C0A9F0"/>
 
     <label>輪詢頻率</label>
     <select id="pollSec">
-      <option value="60">每 60 秒（測試用）</option>
+      <option value="60">每 60 秒</option>
       <option value="300">每 5 分鐘</option>
-      <option value="600" selected>每 10 分鐘（建議）</option>
-      <option value="1800">每 30 分鐘</option>
+      <option value="600" selected>每 10 分鐘</option>
     </select>
 
     <div class="hr"></div>
-
-    <label>警戒門檻（mm）</label>
-    <div class="grid2">
-      <div>
-        <div class="small">黃：R24 ≥</div>
-        <input id="thY_R24" type="number" step="1" value="80" />
-      </div>
-      <div>
-        <div class="small">橘：R24 ≥</div>
-        <input id="thO_R24" type="number" step="1" value="150" />
-      </div>
-    </div>
-    <div class="grid2" style="margin-top:10px">
-      <div>
-        <div class="small">紅：R24 ≥</div>
-        <input id="thR_R24" type="number" step="1" value="200" />
-      </div>
-      <div>
-        <div class="small">紅：且 R72 ≥</div>
-        <input id="thR_R72" type="number" step="1" value="300" />
-      </div>
-    </div>
-
-    <label>有效累積雨量 AER（指數衰減）</label>
-    <div class="grid2">
-      <div>
-        <div class="small">衰減半衰期（小時）</div>
-        <input id="aerHalfLifeH" type="number" step="1" value="36" />
-      </div>
-      <div>
-        <div class="small">AER 額外紅色門檻（mm，可留空不啟用）</div>
-        <input id="thAER_Red" type="number" step="1" placeholder="例如 260" />
-      </div>
-    </div>
-
-    <div class="hr"></div>
-
     <div class="row">
       <button id="btnStart">開始監測</button>
-      <button class="secondary" id="btnStop" disabled>停止</button>
+      <button class="secondary" id="btnStop">停止</button>
       <button class="danger" id="btnClear">清除本機歷史</button>
-    </div>
-
-    <div class="small" style="margin-top:10px">
-      ✅ 這頁會把每次抓到的「10 分鐘雨量」存在瀏覽器，並自行累積算出 1h/24h/72h/AER。<br/>
-      📌 GitHub Pages：請把 <span class="mono">index.html</span> 與 <span class="mono">mock_cwa.json</span> 放在同一層。
     </div>
   </section>
 
-  <!-- RIGHT: Dashboard -->
   <section class="card">
-    <div class="row" style="justify-content:space-between;gap:10px">
-      <div>
-        <div class="pill" id="riskPill">
-          <span class="statusDot" id="riskDot" style="background:var(--info)"></span>
-          <span id="riskText">—</span>
-        </div>
-        <div class="small" style="margin-top:8px">
-          最後更新：<span class="mono" id="lastTs">—</span>　
-          測站：<span class="mono" id="stName">—</span>（<span class="mono" id="stId">—</span>）
-        </div>
-      </div>
-      <div class="pill">
-        <span>位移警示</span>
-        <span class="mono" style="color:var(--muted)">Rainfall → Risk</span>
-      </div>
-    </div>
-
-    <div class="hr"></div>
-
-    <div class="grid3">
-      <div class="kpi">
-        <div class="t">近 10 分鐘雨量</div>
-        <div class="v"><span id="k10">—</span><span class="u">mm</span></div>
-      </div>
-      <div class="kpi">
-        <div class="t">近 1 小時累積</div>
-        <div class="v"><span id="k1h">—</span><span class="u">mm</span></div>
-      </div>
-      <div class="kpi">
-        <div class="t">近 24 小時累積</div>
-        <div class="v"><span id="k24h">—</span><span class="u">mm</span></div>
-      </div>
+    <div class="row">
+      <div class="pill"><span class="statusDot" id="riskDot" style="background:var(--info)"></span><span id="riskText">—</span></div>
+      <div class="pill">Rainfall → Risk</div>
     </div>
 
     <div class="grid3" style="margin-top:10px">
-      <div class="kpi">
-        <div class="t">近 72 小時累積</div>
-        <div class="v"><span id="k72h">—</span><span class="u">mm</span></div>
-      </div>
-      <div class="kpi">
-        <div class="t">AER（有效累積雨量）</div>
-        <div class="v"><span id="kAER">—</span><span class="u">mm</span></div>
-      </div>
-      <div class="kpi">
-        <div class="t">資料點數（本機）</div>
-        <div class="v"><span id="kN">—</span><span class="u">筆</span></div>
-      </div>
+      <div class="kpi"><div class="t">10min</div><div class="v"><span id="k10">—</span> mm</div></div>
+      <div class="kpi"><div class="t">24h</div><div class="v"><span id="k24">—</span> mm</div></div>
+      <div class="kpi"><div class="t">72h</div><div class="v"><span id="k72">—</span> mm</div></div>
     </div>
 
     <div class="hr"></div>
-
-    <div style="display:flex;gap:10px;align-items:center;justify-content:space-between">
-      <div class="small">圖表：近 24 小時（每次抓取一筆）</div>
-      <div class="pill mono" id="debugLine">—</div>
-    </div>
-
-    <div style="margin-top:10px">
-      <canvas id="chart" width="1200" height="260" aria-label="rain chart"></canvas>
-    </div>
+    <canvas id="chart" width="1200" height="260"></canvas>
 
     <div class="hr"></div>
-
-    <div class="small" style="margin-bottom:8px">近 12 筆紀錄（最新在上）</div>
     <table>
-      <thead>
-        <tr>
-          <th>時間</th>
-          <th class="right">10min(mm)</th>
-          <th class="right">1h</th>
-          <th class="right">24h</th>
-          <th class="right">72h</th>
-        </tr>
-      </thead>
+      <thead><tr><th>時間</th><th class="right">10min</th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
   </section>
 </main>
 
-<div class="toast" id="toast">
-  <div class="title" id="toastTitle">警示</div>
-  <div class="msg" id="toastMsg">—</div>
-  <div style="margin-top:10px;display:flex;justify-content:flex-end;gap:8px">
-    <button class="secondary" id="toastClose">關閉</button>
-  </div>
-</div>
-
 <script>
-/**
- * ✅ GitHub Pages 版完整 index.html
- * - Mock 模式：fetch("./mock_cwa.json")
- * - 真 API 模式：fetch("https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0002-001?Authorization=KEY")
- * - 自動累積 1h/24h/72h + AER + 警戒分級 + toast
- */
+const $=id=>document.getElementById(id);
+const now=()=>Date.now();
+let timer=null, hist=JSON.parse(localStorage.getItem("hist")||"[]");
 
-// ==========================
-// Utilities
-// ==========================
-const $ = (id) => document.getElementById(id);
-const fmt = (n, d=1) => (Number.isFinite(n) ? n.toFixed(d) : "—");
-const nowMs = () => Date.now();
+function setSys(t,c){$("sysText").textContent=t;$("sysDot").style.background=`var(${c})`}
+function setRisk(t,c){$("riskText").textContent=t;$("riskDot").style.background=`var(${c})`}
 
-function setSys(status, colorVar){
-  $("sysText").textContent = status;
-  $("sysDot").style.background = `var(${colorVar})`;
-}
-function setRisk(text, colorVar){
-  $("riskText").textContent = text;
-  $("riskDot").style.background = `var(${colorVar})`;
+async function fetchStations(){
+  const r=await fetch("./mock_cwa.json",{cache:"no-store"});
+  const j=await r.json();
+  return j.records.Station;
 }
 
-function toast(title, msgHtml){
-  $("toastTitle").textContent = title;
-  $("toastMsg").innerHTML = msgHtml;
-  $("toast").style.display = "block";
-}
-$("toastClose").addEventListener("click", ()=> $("toast").style.display = "none");
-
-// ==========================
-// Local storage schema
-// ==========================
-const LS_KEY = "rain_history_v1";
-const LS_CFG = "rain_cfg_v1";
-
-function loadHistory(){
-  try{
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw) return [];
-    const arr = JSON.parse(raw);
-    if(!Array.isArray(arr)) return [];
-    // shape: {ts:number, p10:number, obsTs?:string}
-    return arr.filter(x => x && typeof x.ts==="number" && typeof x.p10==="number");
-  }catch{ return []; }
-}
-function saveHistory(arr){
-  localStorage.setItem(LS_KEY, JSON.stringify(arr.slice(-5000)));
-}
-function clearHistory(){
-  localStorage.removeItem(LS_KEY);
+function sum(ms){
+  const t0=now()-ms;return hist.filter(x=>x.ts>=t0).reduce((a,b)=>a+b.p10,0);
 }
 
-function loadCfg(){
-  try{
-    const raw = localStorage.getItem(LS_CFG);
-    if(!raw) return null;
-    return JSON.parse(raw);
-  }catch{ return null; }
-}
-function saveCfg(cfg){
-  localStorage.setItem(LS_CFG, JSON.stringify(cfg));
+function render(){
+  $("k10").textContent=(hist.at(-1)?.p10??"—");
+  $("k24").textContent=sum(24*3600*1000).toFixed(1);
+  $("k72").textContent=sum(72*3600*1000).toFixed(1);
+  const tr=hist.slice(-12).reverse().map(x=>`<tr><td class="mono">${new Date(x.ts).toLocaleString()}</td><td class="right mono">${x.p10}</td></tr>`).join("");
+  $("tbody").innerHTML=tr;
+  setRisk(sum(24*3600*1000)>=150?"橘色（警戒）":"綠色（正常）", sum(24*3600*1000)>=150?"--warn":"--ok");
 }
 
-// ==========================
-// URL builder (real API only)
-// ==========================
-function buildUrl(apiKey){
-  const base = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0002-001";
-  const params = new URLSearchParams({ Authorization: apiKey || "" });
-  return `${base}?${params.toString()}`;
+async function tick(){
+  setSys("抓取中…","--info");
+  const st=(await fetchStations()).find(x=>x.StationId===$("stationId").value);
+  let p10=Number(st.RainfallElement.Now.Precipitation)||0;
+  p10=Math.round((p10+(Math.random()<0.08?10:Math.random()*3))*10)/10;
+  hist.push({ts:now(),p10}); hist=hist.slice(-500);
+  localStorage.setItem("hist",JSON.stringify(hist));
+  render(); setSys("監測中","--ok");
 }
 
-// ==========================
-// Fetch + parse
-// ==========================
-async function fetchCwaLatest(apiKey, useMock){
-  if(useMock){
-    const res = await fetch("./mock_cwa.json", { cache:"no-store" });
-    if(!res.ok) throw new Error(`Mock HTTP ${res.status}（請確認 mock_cwa.json 與 index.html 同層）`);
-    const json = await res.json();
-    const stations = json?.records?.Station;
-    if(!Array.isArray(stations)) throw new Error("Mock 格式不符：找不到 records.Station");
-    return stations;
-  }
+$("btnStart").onclick=()=>{if(timer)clearInterval(timer);tick();timer=setInterval(tick,Number($("pollSec").value)*1000)};
+$("btnStop").onclick=()=>{if(timer)clearInterval(timer);setSys("已停止","--warn")};
+$("btnClear").onclick=()=>{hist=[];localStorage.removeItem("hist");render();setSys("已清除","--warn")};
 
-  const url = buildUrl(apiKey);
-  const res = await fetch(url, { cache:"no-store" });
-  if(!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-
-  const stations = json?.records?.Station;
-  if(!Array.isArray(stations)) throw new Error("資料格式不符：找不到 records.Station");
-  return stations;
-}
-
-function pickStation(stations, stationId){
-  const sid = (stationId||"").trim();
-  if(!sid) return null;
-
-  let s = stations.find(x => (x?.StationId || x?.StationID || "").toString().trim() === sid);
-  if(!s){
-    const sid2 = sid.toLowerCase();
-    s = stations.find(x => ((x?.StationId || x?.StationID || "").toString().trim().toLowerCase() === sid2));
-  }
-  return s || null;
-}
-
-function extractRain10Min(st){
-  const v = st?.RainfallElement?.Now?.Precipitation
-        ?? st?.RainfallElement?.Now?.Precipitation10Min
-        ?? st?.RainfallElement?.Precipitation
-        ?? st?.Precipitation;
-
-  if(v === "T" || v === "-" || v === null || v === undefined) return 0.0;
-  const num = Number(v);
-  if(!Number.isFinite(num) || num < 0) return NaN;
-  return num;
-}
-
-function extractObsTime(st){
-  const t = st?.ObsTime?.DateTime || st?.DateTime || st?.ObsTime;
-  return (typeof t === "string" && t) ? t : null;
-}
-
-function extractStationName(st){
-  return st?.StationName || st?.Station?.StationName || "—";
-}
-
-// ==========================
-// Rain analytics (1h/24h/72h + AER)
-// ==========================
-function sumWindow(history, windowMs, tNow){
-  const t0 = tNow - windowMs;
-  let s = 0;
-  for(let i = history.length-1; i >= 0; i--){
-    const it = history[i];
-    if(it.ts < t0) break;
-    s += it.p10;
-  }
-  return s;
-}
-
-function computeAER(history, halfLifeH, tNow){
-  if(!Number.isFinite(halfLifeH) || halfLifeH <= 0) return NaN;
-
-  const lambda = Math.LN2 / halfLifeH;
-  let s = 0;
-  for(let i = history.length-1; i >= 0; i--){
-    const it = history[i];
-    const ageH = (tNow - it.ts) / 3600000;
-    if(ageH > 240) break; // 10 天
-    s += it.p10 * Math.exp(-lambda * ageH);
-  }
-  return s;
-}
-
-// ==========================
-// Risk logic
-// ==========================
-function classifyRisk({R24, R72, AER, th}){
-  if(Number.isFinite(th.aerRed) && Number.isFinite(AER) && AER >= th.aerRed){
-    return { level:"紅色（AER 觸發）", color:"--danger" };
-  }
-  if(R24 >= th.r24_red && R72 >= th.r72_red){
-    return { level:"紅色（立即警戒）", color:"--danger" };
-  }
-  if(R24 >= th.r24_orange){
-    return { level:"橘色（高度警戒）", color:"--warn" };
-  }
-  if(R24 >= th.r24_yellow){
-    return { level:"黃色（注意）", color:"--info" };
-  }
-  return { level:"綠色（正常）", color:"--ok" };
-}
-
-// ==========================
-// UI rendering
-// ==========================
-function render(history, metrics){
-  $("k10").textContent  = fmt(metrics.p10, 1);
-  $("k1h").textContent  = fmt(metrics.R1h, 1);
-  $("k24h").textContent = fmt(metrics.R24, 1);
-  $("k72h").textContent = fmt(metrics.R72, 1);
-  $("kAER").textContent = fmt(metrics.AER, 1);
-  $("kN").textContent   = String(history.length);
-
-  $("lastTs").textContent = metrics.lastTs || "—";
-  $("stName").textContent = metrics.stationName || "—";
-  $("stId").textContent   = metrics.stationId || "—";
-
-  setRisk(metrics.risk.level, metrics.risk.color);
-
-  // Table (latest 12)
-  const rows = [];
-  const last = history.slice(-12).reverse();
-  for(const it of last){
-    const t = new Date(it.ts);
-    const ts = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")} ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`;
-    const subHist = history.filter(x=>x.ts<=it.ts);
-    rows.push(`
-      <tr>
-        <td class="mono">${ts}</td>
-        <td class="right mono">${fmt(it.p10, 1)}</td>
-        <td class="right mono">${fmt(sumWindow(subHist, 1*3600*1000, it.ts), 1)}</td>
-        <td class="right mono">${fmt(sumWindow(subHist, 24*3600*1000, it.ts), 1)}</td>
-        <td class="right mono">${fmt(sumWindow(subHist, 72*3600*1000, it.ts), 1)}</td>
-      </tr>
-    `);
-  }
-  $("tbody").innerHTML = rows.join("");
-
-  drawChart(history);
-
-  $("debugLine").textContent = `R24=${fmt(metrics.R24,1)} R72=${fmt(metrics.R72,1)} AER=${fmt(metrics.AER,1)}`;
-}
-
-function drawChart(history){
-  const canvas = $("chart");
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-
-  ctx.clearRect(0,0,W,H);
-
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = "rgba(38,49,74,.9)";
-  ctx.strokeRect(0.5,0.5,W-1,H-1);
-
-  const tNow = nowMs();
-  const t0 = tNow - 24*3600*1000;
-  const data = history.filter(x => x.ts >= t0);
-  if(data.length < 2){
-    ctx.fillStyle = "rgba(169,183,211,.8)";
-    ctx.font = "16px ui-sans-serif, system-ui";
-    ctx.fillText("資料不足（需累積一段時間才會有 24h 圖）", 16, 40);
-    return;
-  }
-
-  const maxP = Math.max(...data.map(x => x.p10), 5);
-  const padL=50, padR=12, padT=14, padB=26;
-  const x0=padL, y0=padT, x1=W-padR, y1=H-padB;
-
-  ctx.strokeStyle = "rgba(38,49,74,.5)";
-  ctx.fillStyle = "rgba(169,183,211,.7)";
-  ctx.font = "12px ui-monospace, monospace";
-  for(let i=0;i<=4;i++){
-    const y = y1 - (i/4)*(y1-y0);
-    ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
-    const v = (i/4)*maxP;
-    ctx.fillText(v.toFixed(1), 10, y+4);
-  }
-
-  const tMin = data[0].ts;
-  const tMax = data[data.length-1].ts;
-
-  function X(ts){ return x0 + ( (ts - tMin) / (tMax - tMin || 1) ) * (x1-x0); }
-  function Y(p){ return y1 - (p / maxP) * (y1-y0); }
-
-  ctx.strokeStyle = "rgba(96,165,250,.95)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(X(data[0].ts), Y(data[0].p10));
-  for(let i=1;i<data.length;i++){
-    ctx.lineTo(X(data[i].ts), Y(data[i].p10));
-  }
-  ctx.stroke();
-
-  ctx.fillStyle = "rgba(169,183,211,.75)";
-  const tA = new Date(tMin);
-  const tB = new Date(tMax);
-  ctx.fillText(`${String(tA.getHours()).padStart(2,"0")}:${String(tA.getMinutes()).padStart(2,"0")}`, x0, H-8);
-  ctx.fillText(`${String(tB.getHours()).padStart(2,"0")}:${String(tB.getMinutes()).padStart(2,"0")}`, x1-42, H-8);
-
-  ctx.fillStyle = "rgba(230,238,252,.9)";
-  ctx.font = "14px ui-sans-serif, system-ui";
-  ctx.fillText("近 24 小時：每次抓取的 10 分鐘雨量（mm）", x0, 22);
-}
-
-// ==========================
-// Main loop
-// ==========================
-let timer = null;
-let lastAlert = null;
-
-function readThresholds(){
-  return {
-    r24_yellow: Number($("thY_R24").value),
-    r24_orange: Number($("thO_R24").value),
-    r24_red:    Number($("thR_R24").value),
-    r72_red:    Number($("thR_R72").value),
-    aerRed:     $("thAER_Red").value.trim()==="" ? NaN : Number($("thAER_Red").value),
-  };
-}
-
-function readCfgFromUI(){
-  const useMock = $("useMock").checked;
-  const apiKey = $("apiKey").value.trim();
-  const stationId = $("stationId").value.trim();
-  const pollSec = Number($("pollSec").value);
-  const halfLife = Number($("aerHalfLifeH").value);
-  const th = readThresholds();
-  return { useMock, apiKey, stationId, pollSec, halfLife, th };
-}
-
-function applyCfgToUI(cfg){
-  $("useMock").checked = !!cfg.useMock;
-  $("apiKey").value = cfg.apiKey || "";
-  $("stationId").value = cfg.stationId || "";
-  $("pollSec").value = String(cfg.pollSec || 600);
-  $("aerHalfLifeH").value = String(cfg.halfLife || 36);
-  if(cfg.th){
-    $("thY_R24").value = String(cfg.th.r24_yellow ?? 80);
-    $("thO_R24").value = String(cfg.th.r24_orange ?? 150);
-    $("thR_R24").value = String(cfg.th.r24_red ?? 200);
-    $("thR_R72").value = String(cfg.th.r72_red ?? 300);
-    $("thAER_Red").value = Number.isFinite(cfg.th.aerRed) ? String(cfg.th.aerRed) : "";
-  }
-}
-
-function refreshApiPreview(){
-  const cfg = readCfgFromUI();
-  $("apiUrl").value = cfg.useMock ? "./mock_cwa.json" : buildUrl(cfg.apiKey || "YOUR_KEY");
-  $("apiKey").disabled = cfg.useMock; // mock 不用 key
-}
-
-async function tick({showToastOnAlert=true}={}){
-  const cfg = readCfgFromUI();
-
-  if(!cfg.stationId){
-    setSys("請先填 StationId", "--warn");
-    return;
-  }
-  if(!cfg.useMock && !cfg.apiKey){
-    setSys("真 API 需要填 API Key（Authorization）", "--warn");
-    return;
-  }
-
-  refreshApiPreview();
-
-  try{
-    setSys("抓取中…", "--info");
-    const stations = await fetchCwaLatest(cfg.apiKey, cfg.useMock);
-    const st = pickStation(stations, cfg.stationId);
-    if(!st) throw new Error("找不到該 StationId（請確認站號是否正確、mock 內是否有該站）");
-
-    let p10 = extractRain10Min(st);
-    const obsTs = extractObsTime(st);
-    const name = extractStationName(st);
-
-    if(!Number.isFinite(p10)){
-      throw new Error("雨量值無效（可能是 X/-99 等特殊代碼或站點無資料）");
-    }
-
-    // ✅ Mock 模式：讓每次 tick 的雨量更像真的（小幅波動、偶爾暴雨）
-    if(cfg.useMock){
-      const bump = (Math.random() < 0.08) ? (10 + Math.random()*15) : (Math.random()*3);
-      p10 = Math.round((p10 + bump) * 10) / 10;
-    }
-
-    // Update history (dedupe)
-    const hist = loadHistory();
-    const ts = nowMs();
-    if(hist.length>0 && (ts - hist[hist.length-1].ts) < 3*60*1000){
-      hist[hist.length-1] = { ts, p10, obsTs };
-    }else{
-      hist.push({ ts, p10, obsTs });
-    }
-
-    // Trim old points
-    const keepAfter = ts - 10*24*3600*1000;
-    const hist2 = hist.filter(x => x.ts >= keepAfter);
-    saveHistory(hist2);
-
-    // Compute metrics
-    const R1h  = sumWindow(hist2,  1*3600*1000, ts);
-    const R24  = sumWindow(hist2, 24*3600*1000, ts);
-    const R72  = sumWindow(hist2, 72*3600*1000, ts);
-    const AER  = computeAER(hist2, cfg.halfLife, ts);
-
-    const risk = classifyRisk({R24, R72, AER, th: cfg.th});
-
-    render(hist2, {
-      p10, R1h, R24, R72, AER,
-      risk,
-      lastTs: obsTs || new Date(ts).toISOString(),
-      stationName: name,
-      stationId: cfg.stationId
-    });
-
-    setSys("監測中", "--ok");
-
-    if(showToastOnAlert){
-      const key = risk.level;
-      const isAlert = key.includes("黃色") || key.includes("橘色") || key.includes("紅色");
-      if(isAlert && lastAlert !== key){
-        const msg = [
-          `測站：<b>${name}</b>（<span class="mono">${cfg.stationId}</span>）`,
-          `10min=<span class="mono">${fmt(p10,1)}</span>mm　1h=<span class="mono">${fmt(R1h,1)}</span>mm`,
-          `24h=<span class="mono">${fmt(R24,1)}</span>mm　72h=<span class="mono">${fmt(R72,1)}</span>mm　AER=<span class="mono">${fmt(AER,1)}</span>mm`,
-          `門檻：黃 R24≥${cfg.th.r24_yellow}、橘 R24≥${cfg.th.r24_orange}、紅 R24≥${cfg.th.r24_red} 且 R72≥${cfg.th.r72_red}` +
-            (Number.isFinite(cfg.th.aerRed) ? `、AER紅≥${cfg.th.aerRed}` : "")
-        ].join("<br/>");
-        toast(`⚠️ ${risk.level}`, msg);
-      }
-      lastAlert = key;
-    }
-  }catch(err){
-    setSys(`錯誤：${err?.message || err}`, "--danger");
-  }
-}
-
-function start(){
-  const cfg = readCfgFromUI();
-  saveCfg(cfg);
-
-  $("btnStart").disabled = true;
-  $("btnStop").disabled = false;
-
-  tick();
-
-  if(timer) clearInterval(timer);
-  timer = setInterval(()=>tick(), Math.max(10, cfg.pollSec)*1000);
-}
-
-function stop(){
-  if(timer) clearInterval(timer);
-  timer = null;
-  $("btnStart").disabled = false;
-  $("btnStop").disabled = true;
-  setSys("已停止", "--warn");
-}
-
-// ==========================
-// Events
-// ==========================
-$("btnStart").addEventListener("click", start);
-$("btnStop").addEventListener("click", stop);
-
-$("btnClear").addEventListener("click", ()=>{
-  if(confirm("確定要清除本機雨量歷史（localStorage）？")){
-    clearHistory();
-    toast("已清除", "本機歷史已清除。請重新累積一段時間才會有 24h/72h 統計。");
-    const h = [];
-    render(h, {
-      p10:NaN,R1h:NaN,R24:NaN,R72:NaN,AER:NaN,
-      risk:{level:"—",color:"--info"},
-      lastTs:null, stationName:null, stationId:null
-    });
-    setSys("已清除", "--warn");
-  }
-});
-
-$("btnTest").addEventListener("click", async ()=>{
-  await tick({showToastOnAlert:false});
-});
-
-$("useMock").addEventListener("change", ()=>{
-  refreshApiPreview();
-  const cfg = readCfgFromUI();
-  saveCfg(cfg);
-});
-
-// ==========================
-// Init
-// ==========================
-(function init(){
-  const cfg = loadCfg();
-  if(cfg) applyCfgToUI(cfg);
-
-  // 預設給你一個 mock 常用站號（若空）
-  if(!$("stationId").value.trim()){
-    $("stationId").value = "C0A9F0";
-  }
-
-  refreshApiPreview();
-
-  // render existing history
-  const hist = loadHistory();
-  const ts = nowMs();
-  const halfLife = Number($("aerHalfLifeH").value || 36);
-  render(hist, {
-    p10:NaN,
-    R1h:sumWindow(hist,1*3600*1000,ts),
-    R24:sumWindow(hist,24*3600*1000,ts),
-    R72:sumWindow(hist,72*3600*1000,ts),
-    AER:computeAER(hist, halfLife, ts),
-    risk:{level:"—",color:"--info"},
-    lastTs:null,
-    stationName:null,
-    stationId:$("stationId").value.trim() || null
-  });
-
-  setSys(hist.length ? "已載入本機歷史（尚未開始輪詢）" : "尚未開始", "--info");
-
-  // ✅ 自動開始：只要 StationId 有值，且（Mock 開啟 或 真 API 有 key）
-  const c = readCfgFromUI();
-  if(c.stationId && (c.useMock || c.apiKey)){
-    start();
-  }
-})();
+render(); setSys("尚未開始","--info");
 </script>
 </body>
 </html>
