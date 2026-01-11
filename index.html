@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>順向坡位移警示（中央氣象署雨量）</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121a2b;
+      --text:#e6eefc;
+      --muted:#a9b7d3;
+      --line:#26314a;
+      --btn:#2a66ff;
+      --danger:#ff4d4f;
+      --warn:#ffb020;
+      --ok:#22c55e;
+      --info:#60a5fa;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg, #0b1220 0%, #070c16 100%);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", Arial;
+    }
+    header{
+      padding:20px 16px 10px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+    h1{margin:0 0 6px;font-size:20px;letter-spacing:.5px}
+    .sub{color:var(--muted);font-size:13px;line-height:1.5}
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:12px 16px 28px;
+      display:grid;
+      grid-template-columns: 380px 1fr;
+      gap:14px;
+    }
+    @media (max-width:980px){ main{grid-template-columns:1fr} }
+    .card{
+      background:rgba(18,26,43,.92);
+      border:1px solid rgba(38,49,74,.9);
+      border-radius:14px;
+      padding:14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .row{display:flex;gap:10px;align-items:center}
+    .row > *{flex:1}
+    label{display:block;color:var(--muted);font-size:12px;margin:10px 0 6px}
+    input, select, textarea{
+      width:100%;
+      background:#0c1324;
+      border:1px solid #24314c;
+      color:var(--text);
+      border-radius:10px;
+      padding:10px 10px;
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:64px;resize:vertical}
+    input:focus, textarea:focus, select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+    button{
+      background:var(--btn);
+      border:none;
+      color:white;
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      letter-spacing:.3px;
+    }
+    button.secondary{background:#273451}
+    button.danger{background:var(--danger)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid #2b395a;
+      background:#0c1324;
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .statusDot{width:10px;height:10px;border-radius:50%}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .kpi{
+      border:1px solid #23304b;
+      border-radius:12px;
+      padding:12px;
+      background:#0c1324;
+    }
+    .kpi .t{color:var(--muted);font-size:12px}
+    .kpi .v{font-size:22px;font-weight:800;margin-top:6px}
+    .kpi .u{color:var(--muted);font-size:12px;margin-left:6px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .small{font-size:12px;color:var(--muted);line-height:1.45}
+    .hr{height:1px;background:rgba(38,49,74,.9);margin:12px 0}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid rgba(38,49,74,.6);padding:10px 8px;text-align:left;font-size:13px}
+    th{color:var(--muted);font-weight:600}
+    .right{text-align:right}
+    canvas{width:100%;height:220px;background:#0c1324;border:1px solid #23304b;border-radius:12px}
+    .toast{
+      position:fixed;right:14px;bottom:14px;max-width:360px;
+      background:#0c1324;border:1px solid #23304b;border-radius:12px;padding:12px;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);display:none;
+    }
+    .toast .title{font-weight:800;margin-bottom:6px}
+    .toast .msg{color:var(--muted);font-size:13px;line-height:1.45}
+  </style>
+</head>
+<body>
+<header>
+  <h1>順向坡位移警示（連接中央氣象署雨量）</h1>
+  <div class="sub">
+    以中央氣象署 Opendata「雨量觀測站-雨量資料（O-A0002-001）」做即時監測，計算 <b>1h / 24h / 72h</b> 與 <b>有效累積雨量 AER</b>，觸發警戒分級。
+    <br/>
+    API 來源：CWA Opendata（你需要自己的 API Key）。:contentReference[oaicite:0]{index=0}
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: Controls -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between;gap:10px;align-items:flex-start">
+      <div class="pill" id="sysStatus">
+        <span class="statusDot" id="sysDot" style="background:var(--info)"></span>
+        <span id="sysText">尚未開始</span>
+      </div>
+      <div class="pill mono" title="本頁只在你的瀏覽器保存設定與雨量歷史（localStorage）">
+        localStorage
+      </div>
+    </div>
+
+    <label>中央氣象署 API Key（Authorization）</label>
+    <input id="apiKey" placeholder="請貼上你的 API Key（例如：CWA-xxxxxxxxx）" />
+
+    <label>測站 StationId（雨量站代碼）</label>
+    <div class="row">
+      <input id="stationId" placeholder="例如：C0A9F0（請填你的雨量站代碼）" />
+      <button class="secondary" id="btnTest">測試抓取</button>
+    </div>
+    <div class="small">
+      小提醒：O-A0002-001 每 10 分鐘更新一次。:contentReference[oaicite:1]{index=1}
+    </div>
+
+    <div class="hr"></div>
+
+    <label>資料擷取 URL（預設）</label>
+    <input id="apiUrl" class="mono" />
+
+    <label>輪詢頻率</label>
+    <select id="pollSec">
+      <option value="60">每 60 秒（測試用）</option>
+      <option value="300">每 5 分鐘</option>
+      <option value="600">每 10 分鐘（建議）</option>
+      <option value="1800">每 30 分鐘</option>
+    </select>
+
+    <div class="hr"></div>
+
+    <label>警戒門檻（mm）</label>
+    <div class="grid2">
+      <div>
+        <div class="small">黃：R24 ≥</div>
+        <input id="thY_R24" type="number" step="1" value="80" />
+      </div>
+      <div>
+        <div class="small">橘：R24 ≥</div>
+        <input id="thO_R24" type="number" step="1" value="150" />
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:10px">
+      <div>
+        <div class="small">紅：R24 ≥</div>
+        <input id="thR_R24" type="number" step="1" value="200" />
+      </div>
+      <div>
+        <div class="small">紅：且 R72 ≥</div>
+        <input id="thR_R72" type="number" step="1" value="300" />
+      </div>
+    </div>
+
+    <label>有效累積雨量 AER（指數衰減）</label>
+    <div class="grid2">
+      <div>
+        <div class="small">衰減半衰期（小時，越小越看重近期雨）</div>
+        <input id="aerHalfLifeH" type="number" step="1" value="36" />
+      </div>
+      <div>
+        <div class="small">AER 額外紅色門檻（mm，可留空不啟用）</div>
+        <input id="thAER_Red" type="number" step="1" placeholder="例如 260" />
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="row">
+      <button id="btnStart">開始監測</button>
+      <button class="secondary" id="btnStop" disabled>停止</button>
+      <button class="danger" id="btnClear">清除本機歷史</button>
+    </div>
+
+    <div class="small" style="margin-top:10px">
+      ✅ 這頁會把每次抓到的「10 分鐘雨量」存在你的瀏覽器，並自行累積算出 1h/24h/72h/AER。<br/>
+      ⚠️ 若你想用「官方過去 1 小時」資料（O-A0002-002），可以再加第二支 API；目前先用本地累積，最容易落地。
+      （O-A0002-002 在標準文件中有列。）:contentReference[oaicite:2]{index=2}
+    </div>
+  </section>
+
+  <!-- RIGHT: Dashboard -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between;gap:10px">
+      <div>
+        <div class="pill" id="riskPill">
+          <span class="statusDot" id="riskDot" style="background:var(--info)"></span>
+          <span id="riskText">—</span>
+        </div>
+        <div class="small" style="margin-top:8px">
+          最後更新：<span class="mono" id="lastTs">—</span>　
+          測站：<span class="mono" id="stName">—</span>（<span class="mono" id="stId">—</span>）
+        </div>
+      </div>
+      <div class="pill">
+        <span>位移警示</span>
+        <span class="mono" style="color:var(--muted)">Rainfall → Risk</span>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="grid3">
+      <div class="kpi">
+        <div class="t">近 10 分鐘雨量</div>
+        <div class="v"><span id="k10">—</span><span class="u">mm</span></div>
+      </div>
+      <div class="kpi">
+        <div class="t">近 1 小時累積</div>
+        <div class="v"><span id="k1h">—</span><span class="u">mm</span></div>
+      </div>
+      <div class="kpi">
+        <div class="t">近 24 小時累積</div>
+        <div class="v"><span id="k24h">—</span><span class="u">mm</span></div>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:10px">
+      <div class="kpi">
+        <div class="t">近 72 小時累積</div>
+        <div class="v"><span id="k72h">—</span><span class="u">mm</span></div>
+      </div>
+      <div class="kpi">
+        <div class="t">AER（有效累積雨量）</div>
+        <div class="v"><span id="kAER">—</span><span class="u">mm</span></div>
+      </div>
+      <div class="kpi">
+        <div class="t">資料點數（本機）</div>
+        <div class="v"><span id="kN">—</span><span class="u">筆</span></div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div style="display:flex;gap:10px;align-items:center;justify-content:space-between">
+      <div class="small">
+        圖表：近 24 小時（每次抓取一筆，理想為每 10 分鐘一筆）
+      </div>
+      <div class="pill mono" id="debugLine">—</div>
+    </div>
+
+    <div style="margin-top:10px">
+      <canvas id="chart" width="1200" height="260" aria-label="rain chart"></canvas>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="small" style="margin-bottom:8px">近 12 筆紀錄（最新在上）</div>
+    <table>
+      <thead>
+        <tr>
+          <th>時間</th>
+          <th class="right">10min(mm)</th>
+          <th class="right">1h</th>
+          <th class="right">24h</th>
+          <th class="right">72h</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </section>
+</main>
+
+<div class="toast" id="toast">
+  <div class="title" id="toastTitle">警示</div>
+  <div class="msg" id="toastMsg">—</div>
+  <div style="margin-top:10px;display:flex;justify-content:flex-end;gap:8px">
+    <button class="secondary" id="toastClose">關閉</button>
+  </div>
+</div>
+
+<script>
+/**
+ * 重要：中央氣象署 Opendata REST endpoint（O-A0002-001）
+ * data.gov.tw 提供的示例 URL 形式如下（Authorization 用你的 Key 替換）：
+ * https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0002-001?Authorization=YOUR_KEY
+ * :contentReference[oaicite:3]{index=3}
+ */
+
+// ==========================
+// Utilities
+// ==========================
+const $ = (id) => document.getElementById(id);
+const fmt = (n, d=1) => (Number.isFinite(n) ? n.toFixed(d) : "—");
+const nowMs = () => Date.now();
+
+function setSys(status, colorVar){
+  $("sysText").textContent = status;
+  $("sysDot").style.background = `var(${colorVar})`;
+}
+function setRisk(text, colorVar){
+  $("riskText").textContent = text;
+  $("riskDot").style.background = `var(${colorVar})`;
+}
+
+function toast(title, msg){
+  $("toastTitle").textContent = title;
+  $("toastMsg").textContent = msg;
+  $("toast").style.display = "block";
+}
+$("toastClose").addEventListener("click", ()=> $("toast").style.display = "none");
+
+// ==========================
+// Local storage schema
+// ==========================
+const LS_KEY = "cwa_rain_history_v1";
+const LS_CFG = "cwa_rain_cfg_v1";
+
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return [];
+    // shape: {ts:number, p10:number, obsTs?:string}
+    return arr.filter(x => x && typeof x.ts==="number" && typeof x.p10==="number");
+  }catch{ return []; }
+}
+function saveHistory(arr){
+  localStorage.setItem(LS_KEY, JSON.stringify(arr.slice(-4000))); // keep ~4000 points
+}
+function clearHistory(){
+  localStorage.removeItem(LS_KEY);
+}
+
+function loadCfg(){
+  try{
+    const raw = localStorage.getItem(LS_CFG);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch{ return null; }
+}
+function saveCfg(cfg){
+  localStorage.setItem(LS_CFG, JSON.stringify(cfg));
+}
+
+// ==========================
+// CWA fetch + parse
+// ==========================
+function buildUrl(apiKey){
+  // Default dataset REST url
+  // Keep simple: fetch all then filter by StationId
+  const base = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0002-001";
+  const params = new URLSearchParams({ Authorization: apiKey });
+  return `${base}?${params.toString()}`;
+}
+
+async function fetchCwaLatest(apiKey){
+  const url = buildUrl(apiKey);
+  const res = await fetch(url, { cache:"no-store" });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+
+  // Expected typical shape:
+  // { success: "true", result: {...}, records: { Station: [ ... ] } }
+  const stations = json?.records?.Station;
+  if(!Array.isArray(stations)) throw new Error("資料格式不符：找不到 records.Station");
+
+  return stations;
+}
+
+function pickStation(stations, stationId){
+  const sid = (stationId||"").trim();
+  if(!sid) return null;
+
+  // Match by StationId
+  let s = stations.find(x => (x?.StationId || x?.StationID || "").toString().trim() === sid);
+  if(!s){
+    // Some datasets may use "StationId" but users might type lowercase/space
+    const sid2 = sid.toLowerCase();
+    s = stations.find(x => ((x?.StationId || x?.StationID || "").toString().trim().toLowerCase() === sid2));
+  }
+  return s || null;
+}
+
+function extractRain10Min(st){
+  // According to CWA observation standard doc, rainfall is under:
+  // //Station/RainfallElement/Now/Precipitation (mm)
+  // :contentReference[oaicite:4]{index=4}
+  const v = st?.RainfallElement?.Now?.Precipitation ?? st?.RainfallElement?.Now?.Precipitation10Min ?? st?.RainfallElement?.Precipitation ?? st?.Precipitation;
+
+  if(v === "T") return 0.0;  // rain trace
+  if(v === "-" ) return 0.0; // 0mm 표시
+  const num = Number(v);
+  if(!Number.isFinite(num) || num < 0) return NaN; // X, -99 etc.
+  return num;
+}
+
+function extractObsTime(st){
+  // common: ObsTime.DateTime
+  const t = st?.ObsTime?.DateTime || st?.DateTime || st?.ObsTime;
+  return (typeof t === "string" && t) ? t : null;
+}
+
+function extractStationName(st){
+  return st?.StationName || st?.Station?.StationName || "—";
+}
+
+// ==========================
+// Rain analytics (1h/24h/72h + AER)
+// ==========================
+function sumWindow(history, windowMs){
+  const t0 = nowMs() - windowMs;
+  let s = 0;
+  for(let i = history.length-1; i >= 0; i--){
+    const it = history[i];
+    if(it.ts < t0) break;
+    s += it.p10;
+  }
+  return s;
+}
+
+function computeAER(history, halfLifeH){
+  // AER = Σ p10 * exp( -ln(2) * ageHours / halfLifeH )
+  // halfLifeH 越小越看重近期
+  if(!Number.isFinite(halfLifeH) || halfLifeH <= 0) return NaN;
+
+  const lambda = Math.LN2 / halfLifeH;
+  const tNow = nowMs();
+
+  let s = 0;
+  for(let i = history.length-1; i >= 0; i--){
+    const it = history[i];
+    const ageH = (tNow - it.ts) / 3600000;
+    // Ignore super old points to keep stable
+    if(ageH > 240) break; // 10 days
+    s += it.p10 * Math.exp(-lambda * ageH);
+  }
+  return s;
+}
+
+// ==========================
+// Risk logic (tune as you like)
+// ==========================
+function classifyRisk({R24, R72, AER, th}){
+  // Base on R24 thresholds; red requires both R24 and R72
+  // Optional: AER red threshold
+  if(Number.isFinite(th.aerRed) && Number.isFinite(AER) && AER >= th.aerRed){
+    return { level:"紅色（AER 觸發）", color:"--danger" };
+  }
+  if(R24 >= th.r24_red && R72 >= th.r72_red){
+    return { level:"紅色（立即警戒）", color:"--danger" };
+  }
+  if(R24 >= th.r24_orange){
+    return { level:"橘色（高度警戒）", color:"--warn" };
+  }
+  if(R24 >= th.r24_yellow){
+    return { level:"黃色（注意）", color:"--info" };
+  }
+  return { level:"綠色（正常）", color:"--ok" };
+}
+
+// ==========================
+// UI rendering
+// ==========================
+function render(history, metrics){
+  $("k10").textContent  = fmt(metrics.p10, 1);
+  $("k1h").textContent  = fmt(metrics.R1h, 1);
+  $("k24h").textContent = fmt(metrics.R24, 1);
+  $("k72h").textContent = fmt(metrics.R72, 1);
+  $("kAER").textContent = fmt(metrics.AER, 1);
+  $("kN").textContent   = String(history.length);
+
+  $("lastTs").textContent = metrics.lastTs || "—";
+  $("stName").textContent = metrics.stationName || "—";
+  $("stId").textContent   = metrics.stationId || "—";
+
+  setRisk(metrics.risk.level, metrics.risk.color);
+
+  // Table (latest 12)
+  const rows = [];
+  const last = history.slice(-12).reverse();
+  for(const it of last){
+    const t = new Date(it.ts);
+    const ts = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")} ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`;
+    rows.push(`
+      <tr>
+        <td class="mono">${ts}</td>
+        <td class="right mono">${fmt(it.p10, 1)}</td>
+        <td class="right mono">${fmt(sumWindow(history.filter(x=>x.ts<=it.ts), 1*3600*1000), 1)}</td>
+        <td class="right mono">${fmt(sumWindow(history.filter(x=>x.ts<=it.ts), 24*3600*1000), 1)}</td>
+        <td class="right mono">${fmt(sumWindow(history.filter(x=>x.ts<=it.ts), 72*3600*1000), 1)}</td>
+      </tr>
+    `);
+  }
+  $("tbody").innerHTML = rows.join("");
+
+  // Chart (last 24h)
+  drawChart(history);
+
+  $("debugLine").textContent = `R24=${fmt(metrics.R24,1)} R72=${fmt(metrics.R72,1)} AER=${fmt(metrics.AER,1)}`;
+}
+
+function drawChart(history){
+  const canvas = $("chart");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+
+  // Clear
+  ctx.clearRect(0,0,W,H);
+
+  // Frame
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(38,49,74,.9)";
+  ctx.strokeRect(0.5,0.5,W-1,H-1);
+
+  // Get last 24h points
+  const t0 = nowMs() - 24*3600*1000;
+  const data = history.filter(x => x.ts >= t0);
+  if(data.length < 2){
+    ctx.fillStyle = "rgba(169,183,211,.8)";
+    ctx.font = "16px ui-sans-serif, system-ui";
+    ctx.fillText("資料不足（需累積一段時間才會有 24h 圖）", 16, 40);
+    return;
+  }
+
+  const maxP = Math.max(...data.map(x => x.p10), 5);
+  const padL=50, padR=12, padT=14, padB=26;
+  const x0=padL, y0=padT, x1=W-padR, y1=H-padB;
+
+  // Grid lines (y)
+  ctx.strokeStyle = "rgba(38,49,74,.5)";
+  ctx.fillStyle = "rgba(169,183,211,.7)";
+  ctx.font = "12px ui-monospace, monospace";
+  for(let i=0;i<=4;i++){
+    const y = y1 - (i/4)*(y1-y0);
+    ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
+    const v = (i/4)*maxP;
+    ctx.fillText(v.toFixed(1), 10, y+4);
+  }
+
+  // Line
+  const tMin = data[0].ts;
+  const tMax = data[data.length-1].ts;
+
+  function X(ts){ return x0 + ( (ts - tMin) / (tMax - tMin) ) * (x1-x0); }
+  function Y(p){ return y1 - (p / maxP) * (y1-y0); }
+
+  ctx.strokeStyle = "rgba(96,165,250,.95)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(X(data[0].ts), Y(data[0].p10));
+  for(let i=1;i<data.length;i++){
+    ctx.lineTo(X(data[i].ts), Y(data[i].p10));
+  }
+  ctx.stroke();
+
+  // X labels
+  ctx.fillStyle = "rgba(169,183,211,.75)";
+  const tA = new Date(tMin);
+  const tB = new Date(tMax);
+  ctx.fillText(`${String(tA.getHours()).padStart(2,"0")}:${String(tA.getMinutes()).padStart(2,"0")}`, x0, H-8);
+  ctx.fillText(`${String(tB.getHours()).padStart(2,"0")}:${String(tB.getMinutes()).padStart(2,"0")}`, x1-42, H-8);
+
+  // Title
+  ctx.fillStyle = "rgba(230,238,252,.9)";
+  ctx.font = "14px ui-sans-serif, system-ui";
+  ctx.fillText("近 24 小時：每次抓取的 10 分鐘雨量（mm）", x0, 22);
+}
+
+// ==========================
+// Polling + main loop
+// ==========================
+let timer = null;
+let lastAlert = null;
+
+function readThresholds(){
+  const th = {
+    r24_yellow: Number($("thY_R24").value),
+    r24_orange: Number($("thO_R24").value),
+    r24_red:    Number($("thR_R24").value),
+    r72_red:    Number($("thR_R72").value),
+    aerRed:     $("thAER_Red").value.trim()==="" ? NaN : Number($("thAER_Red").value),
+  };
+  return th;
+}
+
+function readCfgFromUI(){
+  const apiKey = $("apiKey").value.trim();
+  const stationId = $("stationId").value.trim();
+  const pollSec = Number($("pollSec").value);
+  const halfLife = Number($("aerHalfLifeH").value);
+  const th = readThresholds();
+
+  return { apiKey, stationId, pollSec, halfLife, th };
+}
+
+function applyCfgToUI(cfg){
+  $("apiKey").value = cfg.apiKey || "";
+  $("stationId").value = cfg.stationId || "";
+  $("pollSec").value = String(cfg.pollSec || 600);
+  $("aerHalfLifeH").value = String(cfg.halfLife || 36);
+
+  if(cfg.th){
+    $("thY_R24").value = String(cfg.th.r24_yellow ?? 80);
+    $("thO_R24").value = String(cfg.th.r24_orange ?? 150);
+    $("thR_R24").value = String(cfg.th.r24_red ?? 200);
+    $("thR_R72").value = String(cfg.th.r72_red ?? 300);
+    $("thAER_Red").value = Number.isFinite(cfg.th.aerRed) ? String(cfg.th.aerRed) : "";
+  }
+}
+
+async function tick({showToastOnAlert=true}={}){
+  const cfg = readCfgFromUI();
+  if(!cfg.apiKey){
+    setSys("請先填 API Key", "--warn");
+    return;
+  }
+  if(!cfg.stationId){
+    setSys("請先填 StationId", "--warn");
+    return;
+  }
+
+  $("apiUrl").value = buildUrl(cfg.apiKey);
+
+  try{
+    setSys("抓取中…", "--info");
+    const stations = await fetchCwaLatest(cfg.apiKey);
+    const st = pickStation(stations, cfg.stationId);
+    if(!st) throw new Error("找不到該 StationId（請確認代碼是否正確）");
+
+    const p10 = extractRain10Min(st);
+    const obsTs = extractObsTime(st);
+    const name = extractStationName(st);
+
+    if(!Number.isFinite(p10)){
+      throw new Error("雨量值無效（可能是 X/-99 等特殊代碼或站點無資料）");
+    }
+
+    // Update history (dedupe: if last point close time, overwrite)
+    const hist = loadHistory();
+    const ts = nowMs();
+
+    // If last point within 3 minutes, replace (avoid double-save on refresh)
+    if(hist.length>0 && (ts - hist[hist.length-1].ts) < 3*60*1000){
+      hist[hist.length-1] = { ts, p10, obsTs };
+    }else{
+      hist.push({ ts, p10, obsTs });
+    }
+    // Also trim anything older than 10 days to keep sums sane
+    const keepAfter = ts - 10*24*3600*1000;
+    const hist2 = hist.filter(x => x.ts >= keepAfter);
+    saveHistory(hist2);
+
+    // Compute metrics
+    const R1h  = sumWindow(hist2,  1*3600*1000);
+    const R24  = sumWindow(hist2, 24*3600*1000);
+    const R72  = sumWindow(hist2, 72*3600*1000);
+    const AER  = computeAER(hist2, cfg.halfLife);
+
+    const risk = classifyRisk({R24, R72, AER, th: cfg.th});
+
+    // Render
+    render(hist2, {
+      p10, R1h, R24, R72, AER,
+      risk,
+      lastTs: obsTs || new Date(ts).toISOString(),
+      stationName: name,
+      stationId: cfg.stationId
+    });
+
+    setSys("監測中", "--ok");
+
+    // Alert (only on level change or rising)
+    if(showToastOnAlert){
+      const key = risk.level;
+      if(lastAlert !== key && (key.includes("黃色") || key.includes("橘色") || key.includes("紅色"))){
+        const msg = [
+          `測站：${name}（${cfg.stationId}）`,
+          `10min=${fmt(p10,1)}mm  1h=${fmt(R1h,1)}mm`,
+          `24h=${fmt(R24,1)}mm  72h=${fmt(R72,1)}mm  AER=${fmt(AER,1)}mm`,
+          `門檻：黃R24≥${cfg.th.r24_yellow}、橘R24≥${cfg.th.r24_orange}、紅R24≥${cfg.th.r24_red}且R72≥${cfg.th.r72_red}` +
+            (Number.isFinite(cfg.th.aerRed) ? `、AER紅≥${cfg.th.aerRed}` : "")
+        ].join("\n");
+        toast(`⚠️ ${risk.level}`, msg.replaceAll("\n","<br/>"));
+      }
+      lastAlert = key;
+    }
+  }catch(err){
+    setSys(`錯誤：${err?.message || err}`, "--danger");
+  }
+}
+
+function start(){
+  const cfg = readCfgFromUI();
+  // save config
+  saveCfg(cfg);
+
+  $("btnStart").disabled = true;
+  $("btnStop").disabled = false;
+
+  // First tick immediately
+  tick();
+
+  // then interval
+  if(timer) clearInterval(timer);
+  timer = setInterval(()=>tick(), Math.max(10, cfg.pollSec)*1000);
+}
+function stop(){
+  if(timer) clearInterval(timer);
+  timer = null;
+  $("btnStart").disabled = false;
+  $("btnStop").disabled = true;
+  setSys("已停止", "--warn");
+}
+
+$("btnStart").addEventListener("click", start);
+$("btnStop").addEventListener("click", stop);
+$("btnClear").addEventListener("click", ()=>{
+  if(confirm("確定要清除本機雨量歷史（localStorage）？")){
+    clearHistory();
+    toast("已清除", "本機歷史已清除。請重新累積一段時間才會有 24h/72h 統計。");
+    const h = [];
+    render(h, {p10:NaN,R1h:NaN,R24:NaN,R72:NaN,AER:NaN,risk:{level:"—",color:"--info"}, lastTs:null, stationName:null, stationId:null});
+    setSys("已清除", "--warn");
+  }
+});
+
+$("btnTest").addEventListener("click", async ()=>{
+  await tick({showToastOnAlert:false});
+});
+
+// init
+(function init(){
+  const cfg = loadCfg();
+  if(cfg) applyCfgToUI(cfg);
+
+  // set api url preview
+  const apiKey = $("apiKey").value.trim();
+  $("apiUrl").value = apiKey ? buildUrl(apiKey) : buildUrl("YOUR_KEY");
+
+  // render with existing history
+  const hist = loadHistory();
+  render(hist, {p10:NaN,R1h:sumWindow(hist,1*3600*1000),R24:sumWindow(hist,24*3600*1000),R72:sumWindow(hist,72*3600*1000),
+                AER:computeAER(hist, Number($("aerHalfLifeH").value||36)),
+                risk:{level:"—",color:"--info"}, lastTs:null, stationName:null, stationId:$("stationId").value.trim() || null});
+  setSys(hist.length ? "已載入本機歷史（尚未開始輪詢）" : "尚未開始", "--info");
+
+  $("apiKey").addEventListener("input", ()=>{
+    const k = $("apiKey").value.trim();
+    $("apiUrl").value = k ? buildUrl(k) : buildUrl("YOUR_KEY");
+  });
+})();
+</script>
+</body>
+</html>
