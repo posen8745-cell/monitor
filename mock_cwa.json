@@ -1,0 +1,20 @@
+{
+  "success": "true",
+  "result": { "resource_id": "O-A0002-001" },
+  "records": {
+    "Station": [
+      {
+        "StationId": "C0A9F0",
+        "StationName": "Mock Station A",
+        "ObsTime": { "DateTime": "2026-01-11T15:20:00+08:00" },
+        "RainfallElement": { "Now": { "Precipitation": 2.5 } }
+      },
+      {
+        "StationId": "C0XYZ1",
+        "StationName": "Mock Station B",
+        "ObsTime": { "DateTime": "2026-01-11T15:20:00+08:00" },
+        "RainfallElement": { "Now": { "Precipitation": 0.0 } }
+      }
+    ]
+  }
+}
