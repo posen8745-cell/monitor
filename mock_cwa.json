@@ -1,39 +1,27 @@
 {
   "success": "true",
-  "result": {
-    "resource_id": "O-A0002-001"
-  },
   "records": {
     "Station": [
       {
         "StationId": "C0A9F0",
         "StationName": "Mock Station – 坡地 A",
-        "ObsTime": {
-          "DateTime": "2026-01-11T17:43:10+08:00"
-        },
-        "RainfallElement": {
-          "Now": { "Precipitation": 3.5 }
-        }
+        "Latitude": 25.0330,
+        "Longitude": 121.5654,
+        "RainfallElement": { "Now": { "Precipitation": 2.5 } }
       },
       {
         "StationId": "C0B120",
-        "StationName": "Mock Station – 坡地 B",
-        "ObsTime": {
-          "DateTime": "2026-01-11T17:43:10+08:00"
-        },
-        "RainfallElement": {
-          "Now": { "Precipitation": 12.5 }
-        }
+        "StationName": "Mock Station – 坡地 B（暴雨測試）",
+        "Latitude": 25.0478,
+        "Longitude": 121.5319,
+        "RainfallElement": { "Now": { "Precipitation": 10.0 } }
       },
       {
         "StationId": "C0C330",
         "StationName": "Mock Station – 下游 C",
-        "ObsTime": {
-          "DateTime": "2026-01-11T17:43:10+08:00"
-        },
-        "RainfallElement": {
-          "Now": { "Precipitation": 0.8 }
-        }
+        "Latitude": 25.0797,
+        "Longitude": 121.5486,
+        "RainfallElement": { "Now": { "Precipitation": 0.5 } }
       }
     ]
   }
